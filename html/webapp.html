@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+    <body class="homebg">
+        <a href="../index.html">Home</a> |
+        <a href="lotr.html">Lord of the Rings</a> |
+        <a href="vball.html">Volleyball</a> |
+        <a href="#">Jumpy Square</a> |
+        <a href="https://imatty28980.github.io/finalwebsite/index.html" target="_blank">Professional Page</a>
+        <link rel="stylesheet" href="../styles/styles.css"
+        <br><br>
+    </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jumpy Square</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-area {
+            width: 100vw;
+            height: 100vh;
+            background-image: url(../images/antartica.webp);
+            background-repeat: no-repeat;
+            background-size: 1500px;
+            position: relative;
+            overflow: hidden;
+        }
+        #character {
+            width: 50px;
+            height: 70px;
+            background-color: black;
+            position: absolute;
+            bottom: 50px;
+            left: 100px;
+            border-radius: 25px;
+            border-color: azure;
+            border-width: 5px;
+        }
+        #penguin-eye {
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+            left: 15px;
+        }
+        #penguin-eye::after {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background-color: black;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+        }
+        #penguin-right-eye {
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            top: 15px;
+            right: 15px;
+        }
+        #penguin-right-eye::after {
+            content: '';
+            width: 5px;
+            height: 5px;
+            background-color: black;
+            border-radius: 50%;
+            position: absolute;
+            top: 2px;
+            left: 2px;
+        }
+        #penguin-beak {
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid orange;
+            position: absolute;
+            top: 30px;
+            left: 15px;
+}
+        .spike {
+            width: 60px;
+            height: 60px;
+            position: absolute;
+            bottom: 50px;
+        }
+        .orca-body {
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            clip-path: polygon(0% 100%, 50% 0%, 100% 100%);
+        }
+        .orca-white {
+            position: absolute;
+            width: 30px;
+            height: 15px;
+            background-color: white;
+            bottom: 0;
+            left: 15px;
+        }
+        #ground {
+            height: 50px;
+            background-color: white;
+            position: absolute;
+            bottom: 0;
+            width: 200%;
+        }
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: black;
+            text-align: center;
+        }
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-area">
+        <div id="ground"></div>
+        <div id="character">
+          <div id="penguin-eye"></div>
+          <div id="penguin-right-eye"></div>
+          <div id="penguin-beak"></div>
+        </div>
+        <div id="game-over">
+          Game Over<br>
+          <span style="font-size: 24px;">Press Spacebar to Restart</span>
+        </div>
+        <div id="score">Score: 0</div>
+    </div>
+
+    <script>
+        const gameArea = document.getElementById('game-area');
+        const character = document.getElementById('character');
+        const ground = document.getElementById('ground');
+        const gameOverText = document.getElementById('game-over');
+        const scoreElement = document.getElementById('score');
+        let spikes = [];
+        let isJumping = false;
+        let characterPosition = { x: 100, y: 0 };
+        let isGameOver = false;
+        let scrollSpeed = 15;
+        let score = 0;
+        let gameTime = 0;
+
+        const CHARACTER_WIDTH = 50;
+        const SPIKE_WIDTH = 60;
+        const MIN_SPIKE_DISTANCE = 300;
+        const JUMP_HEIGHT = 150;
+        const JUMP_DURATION = 500;
+
+        function createSpikes() {
+            let lastSpikePosition = gameArea.offsetWidth;
+            for (let i = 0; i < 5; i++) {
+                const spike = document.createElement('div');
+                spike.classList.add('spike');
+                const orcaBody = document.createElement('div');
+                orcaBody.classList.add('orca-body');
+                const orcaWhite = document.createElement('div');
+                orcaWhite.classList.add('orca-white');
+                spike.appendChild(orcaBody);
+                spike.appendChild(orcaWhite);
+                lastSpikePosition += MIN_SPIKE_DISTANCE + Math.random() * 300;
+                spike.style.left = lastSpikePosition + 'px';
+                spikes.push(spike);
+                gameArea.appendChild(spike);
+            }
+        }
+
+        function initGame() {
+            characterPosition = { x: 100, y: 0 };
+            isJumping = false;
+            isGameOver = false;
+            scrollSpeed = 15;
+            score = 0;
+            gameTime = 0;
+            updateScore();
+
+            spikes.forEach(spike => spike.remove());
+            spikes = [];
+
+            createSpikes();
+
+            character.style.left = characterPosition.x + 'px';
+            character.style.bottom = (characterPosition.y + 50) + 'px';
+
+            gameOverText.style.display = 'none';
+
+            requestAnimationFrame(update);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            if (isGameOver && event.key === ' ') {
+                initGame();
+                return;
+            }
+            if (isGameOver) return;
+            if (event.key === 'ArrowUp' || event.key === ' ') {
+                jump();
+            }
+        });
+
+        function jump() {
+            if (isJumping) return;
+
+            isJumping = true;
+            let startTime = null;
+
+            function animateJump(currentTime) {
+                if (!startTime) startTime = currentTime;
+                let progress = (currentTime - startTime) / JUMP_DURATION;
+
+                if (progress < 1) {
+                    characterPosition.y = Math.sin(progress * Math.PI) * JUMP_HEIGHT;
+                    requestAnimationFrame(animateJump);
+                } else {
+                    characterPosition.y = 0;
+                    isJumping = false;
+                }
+            }
+
+            requestAnimationFrame(animateJump);
+        }
+
+        function checkCollision() {
+            const charRect = character.getBoundingClientRect();
+
+            for (let spike of spikes) {
+                const spikeRect = spike.getBoundingClientRect();
+
+                if (
+                    charRect.left < spikeRect.right &&
+                    charRect.right > spikeRect.left &&
+                    charRect.bottom > spikeRect.top
+                ) {
+                    endGame();
+                    break;
+                }
+            }
+        }
+
+        function endGame() {
+            isGameOver = true;
+            gameOverText.style.display = 'block';
+        }
+
+        function updateScore() {
+            score = Math.floor(gameTime / 60);
+            scoreElement.textContent = `Score: ${score}`;
+        }
+
+        function increaseSpeed() {
+            scrollSpeed += .75;
+        }
+
+        function update() {
+            if (isGameOver) return;
+
+            gameTime++;
+            if (gameTime % 60 === 0) {
+                updateScore();
+                increaseSpeed();
+            }
+
+            spikes.forEach((spike, index) => {
+                spike.style.left = (parseFloat(spike.style.left) - scrollSpeed) + 'px';
+                
+                if (parseFloat(spike.style.left) < -SPIKE_WIDTH) {
+                    spike.remove();
+                    spikes.splice(index, 1);
+                    
+                    const newSpike = document.createElement('div');
+                    newSpike.classList.add('spike');
+                    const orcaBody = document.createElement('div');
+                    orcaBody.classList.add('orca-body');
+                    const orcaWhite = document.createElement('div');
+                    orcaWhite.classList.add('orca-white');
+                    newSpike.appendChild(orcaBody);
+                    newSpike.appendChild(orcaWhite);
+
+                    const lastSpikeLeftPosition = parseFloat(spikes[spikes.length - 1]?.style.left || gameArea.offsetWidth);
+                    newSpike.style.left = lastSpikeLeftPosition + MIN_SPIKE_DISTANCE + Math.random() * 300 + 'px';
+                    spikes.push(newSpike);
+                    gameArea.appendChild(newSpike);
+                }
+            });
+
+            character.style.bottom = (characterPosition.y + 50) + 'px';
+
+            checkCollision();
+
+            requestAnimationFrame(update);
+        }
+
+        initGame();
+    </script>
+</body>
+</html>
