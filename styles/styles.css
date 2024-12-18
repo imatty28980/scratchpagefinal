@@ -1,0 +1,37 @@
+body {
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 20px;
+    color:darkgreen;
+    background-color:lightgray;
+}
+
+li {
+    font-size: 18px;
+}
+a {
+    color:darkslategray;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+a:visited {
+    color:black;
+}
+.bold {
+    font-weight: bold;
+}
+.black {
+    color: black;
+}
+.cool {
+    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    color: cadetblue;
+    border-bottom: 5px;
+    border-color: black;
+    font-size: 40px;
+    text-decoration: underline;
+}
+.big {
+    font-size: 70px;
+}
